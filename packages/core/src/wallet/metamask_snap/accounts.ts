@@ -26,6 +26,7 @@ import {
   Invocations,
   InvocationsDetails,
   InvocationsDetailsWithNonce,
+  InvocationsSignerDetails,
   InvokeFunctionResponse,
   MultiDeployContractResponse,
   Nonce,
@@ -349,5 +350,30 @@ export class MetaMaskAccountWrapper
     _transactionsDetail?: InvocationsDetails | undefined,
   ): Promise<DeclareContractResponse> {
     throw new Error("declare isn't implemented as of now")
+  }
+
+  public async signTransaction(
+    transactions: Call[],
+    transactionsDetail: InvocationsSignerDetails,
+    abis?: Abi[],
+  ): Promise<Signature | boolean> {
+    const signature = (await this.metaMaskInjectedProvider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: this.snapId,
+        request: {
+          method: "starkNet_signMessage",
+          params: {
+            userAddress: this.address,
+            transactions,
+            transactionsDetail,
+            abis,
+            chainId: await this.getChainId(),
+          },
+        },
+      },
+    })) as unknown as Promise<Signature | boolean>
+
+    return signature
   }
 }
