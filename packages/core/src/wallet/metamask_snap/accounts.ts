@@ -362,7 +362,7 @@ export class MetaMaskAccountWrapper
       params: {
         snapId: this.snapId,
         request: {
-          method: "starkNet_signMessage",
+          method: "starkNet_signTransaction",
           params: {
             userAddress: this.address,
             transactions,
