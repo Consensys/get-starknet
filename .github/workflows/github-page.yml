@@ -7,12 +7,20 @@ on:
         description: "Branch to deploy from"
         required: true
         default: "main"
+
+permissions:
+  id-token: write
+  contents: read
+  pages: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }} # Use the selected branch
 
       - name: Set up Node.js (required if you're using a static site generator)
         uses: actions/setup-node@v2
@@ -23,10 +31,16 @@ jobs:
         run: npm install -g pnpm
 
       - name: Install dependencies with pnpm
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./e2e/dist # Path to your custom folder
+          # upload entire directory
+          path: "./e2e/dist"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
