@@ -1,0 +1,27 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Adjust to the branch you want to deploy from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js (required if you're using a static site generator)
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Build the site (if necessary, skip if pure HTML/CSS)
+        run: npm install && npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./e2e/dist # Path to your custom folder
