@@ -12,4 +12,6 @@ export default defineConfig({
       target: "esnext", // you can also use 'es2020' here
     },
   },
+  // Conditionally set the `base` for production
+  base: "/get-starknet/",
 })
