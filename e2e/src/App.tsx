@@ -1,4 +1,5 @@
 import "./App.css"
+import contractData from "./contracts/merkle_starknet.sierra.json"
 import {
   type ConnectOptions,
   type DisconnectOptions,
@@ -7,7 +8,9 @@ import {
   disconnect,
 } from "@starknet-io/get-starknet"
 import { useState } from "react"
-import { WalletAccount, constants } from "starknet"
+import { WalletAccount, constants, hash } from "starknet"
+
+// adjust path as needed
 
 function App() {
   const [walletName, setWalletName] = useState("")
@@ -219,11 +222,16 @@ function App() {
       accountWallet: null, // Not implemented
       rpc: async () => {
         if (wallet) {
+          const compiled_class_hash =
+            hash.computeSierraContractClassHash(contractData)
+          const contract_class = contractData
+          contract_class.abi = JSON.stringify(contract_class.abi) as any
           try {
             const response = await wallet.request({
               type: "wallet_addDeclareTransaction",
               params: {
-                /* declare transaction params */
+                contract_class: contract_class as any,
+                compiled_class_hash,
               },
             })
             setResult(JSON.stringify(response, null, 2)) // Format as JSON
