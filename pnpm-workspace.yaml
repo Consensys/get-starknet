@@ -3,5 +3,3 @@ packages:
   - "packages/*"
   # example website using the ui package
   - "example"
-  # e2e website using the ui package 
-  - "e2e"
