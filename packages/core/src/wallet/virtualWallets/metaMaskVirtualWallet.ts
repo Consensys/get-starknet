@@ -107,7 +107,7 @@ const metaMaskVirtualWallet: VirtualWallet = {
       MetaMaskSnapWallet: any
     }
 
-    const wallet = new MetaMaskSnapWallet(provider, "*")
+    const wallet = new MetaMaskSnapWallet(provider, "2.10.1-dev-774cfb1-20241024")
     return wallet
   },
   async hasSupport(windowObject) {
