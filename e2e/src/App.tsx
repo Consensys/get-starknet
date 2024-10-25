@@ -1,5 +1,5 @@
 import "./App.css"
-import contractData from "./contracts/merkle_starknet.sierra.json"
+import contractData from "./contracts/contracts_VotingContractFlo.contract_class.json"
 import {
   type ConnectOptions,
   type DisconnectOptions,
@@ -223,9 +223,8 @@ function App() {
       rpc: async () => {
         if (wallet) {
           const compiled_class_hash =
-            hash.computeSierraContractClassHash(contractData)
+            "0x07ea1256c6bb9ff94fc375cfcabf0df588510f1d27895e726db46b7a407e9140"
           const contract_class = contractData
-          contract_class.abi = JSON.stringify(contract_class.abi) as any
           try {
             const response = await wallet.request({
               type: "wallet_addDeclareTransaction",
