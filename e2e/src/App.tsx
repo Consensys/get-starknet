@@ -31,6 +31,12 @@ function App() {
       )
       setWalletAccount(myWalletAccount)
       setWallet(selectedWalletSWO)
+
+      myWalletAccount.onNetworkChanged((chainId, accounts) => {
+        console.log("Network change event")
+        console.log(chainId)
+        console.log(accounts)
+      })
     }
 
     setWalletName(selectedWalletSWO?.name || "")
