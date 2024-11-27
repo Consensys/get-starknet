@@ -1,5 +1,5 @@
 {
-  "name": "@starknet-io/get-starknet-monorepo",
+  "name": "@khanti42/get-starknet-monorepo",
   "version": "4.0.0",
   "private": true,
   "scripts": {
