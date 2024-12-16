@@ -32,22 +32,26 @@ function App() {
 
     if (selectedWalletSWO) {
       const myFrontendProviderUrl =
-        "https://free-rpc.nethermind.io/sepolia-juno/v0_7"
+        "https://free-rpc.nethermind.io/mainnet-juno/v0_7"
       const myWalletAccount = new WalletAccount(
         { nodeUrl: myFrontendProviderUrl },
         selectedWalletSWO,
       )
       setWalletAccount(myWalletAccount)
       setWallet(selectedWalletSWO)
-      setWalletChainId(selectedWalletSWO.chainId)
-      setWalletAddress(selectedWalletSWO?.selectedAddress)
+      setWalletChainId(
+        await selectedWalletSWO.request({
+          type: "wallet_requestChainId",
+        }),
+      )
+      setWalletAddress(myWalletAccount.address)
       setWalletName(selectedWalletSWO?.name || "")
       // Set the wallet globally if needed
       window.wallet = myWalletAccount
-
-      myWalletAccount.walletProvider.on("accountsChanged", (res) => {
-        console.log(res)
-      })
+      window.swo = selectedWalletSWO
+      // myWalletAccount.walletProvider.on("networkChanged", (res,acc) => {
+      //   console.log(res,acc)
+      // })
     }
   }
 
@@ -73,7 +77,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (!walletAccount) return
+    if (!wallet) return
 
     const handleNetworkChange = (chainId: any, accounts: any) => {
       setWalletAddress(accounts[0])
@@ -84,15 +88,15 @@ function App() {
       setWalletAddress(accounts[0])
     }
 
-    walletAccount.onNetworkChanged(handleNetworkChange)
-    walletAccount.onAccountChange(handleAccountChange)
+    wallet.on("networkChanged", handleNetworkChange)
+    wallet.on("accountsChanged", handleAccountChange)
 
     // Manual cleanup strategy: reset listeners on new `walletAccount`
-    return () => {
-      walletAccount.onNetworkChanged(() => {}) // Replaces the listener with a no-op
-      walletAccount.onAccountChange(() => {}) // Replaces the listener with a no-op
-    }
-  }, [walletAccount])
+    // return () => {
+    //   walletAccount.onNetworkChanged(() => {}) // Replaces the listener with a no-op
+    //   walletAccount.onAccountChange(() => {}) // Replaces the listener with a no-op
+    // }
+  }, [wallet])
 
   const methods = [
     {
@@ -178,17 +182,18 @@ function App() {
     {
       name: "wallet_requestChainId",
       label: "Request Chain ID",
-      accountWallet: async () => {
-        if (walletAccount) {
-          try {
-            const response = await walletAccount.getChainId()
-            setResult(response) // Display plain text
-          } catch (error: any) {
-            console.log(error)
-            setResult(`Error: ${error.message}`)
-          }
-        }
-      },
+      accountWallet: null,
+      // accountWallet: async () => {
+      //   if (walletAccount) {
+      //     try {
+      //       const response = await walletAccount.getChainId()
+      //       setResult(response) // Display plain text
+      //     } catch (error: any) {
+      //       console.log(error)
+      //       setResult(`Error: ${error.message}`)
+      //     }
+      //   }
+      // },
       rpc: async () => {
         if (wallet) {
           try {
