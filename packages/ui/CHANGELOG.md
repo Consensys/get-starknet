@@ -1,5 +1,19 @@
 # @starknet-io/get-starknet
 
+## 4.0.5
+
+### Patch Changes
+
+- Updated dependencies [0263b88]
+  - @starknet-io/get-starknet-core@4.0.5
+
+## 4.0.4
+
+### Patch Changes
+
+- Updated dependencies [d2fee96]
+  - @starknet-io/get-starknet-core@4.0.4
+
 ## 4.0.3
 
 ### Patch Changes
