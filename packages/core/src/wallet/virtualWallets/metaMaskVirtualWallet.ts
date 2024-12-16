@@ -147,7 +147,7 @@ class MetaMaskVirtualWallet
           name: "MetaMaskStarknetSnapWallet",
           alias: "MetaMaskStarknetSnapWallet",
           entry:
-            "https://snaps.consensys.io/starknet/get-starknet/v1/remoteEntry.js",
+            "https://dev.snaps.consensys.io/starknet/get-starknet/v1/remoteEntry.js",
         },
       ],
     })
