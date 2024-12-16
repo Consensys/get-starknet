@@ -7,33 +7,52 @@ import {
   connect,
   disconnect,
 } from "@starknet-io/get-starknet"
-import { useState } from "react"
-import { WalletAccount, constants, hash } from "starknet"
+import { useEffect, useState } from "react"
+import { WalletAccount, constants } from "starknet"
 
 // adjust path as needed
+
+type Chains = Record<string, string>
+
+const chains: Chains = {
+  [constants.StarknetChainId.SN_MAIN]: "main",
+  [constants.StarknetChainId.SN_SEPOLIA]: "testnet",
+}
 
 function App() {
   const [walletName, setWalletName] = useState("")
   const [wallet, setWallet] = useState<StarknetWindowObject | null>(null)
   const [walletAccount, setWalletAccount] = useState<WalletAccount | null>(null)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
-  const [result, setResult] = useState<string | boolean>("") // State to hold the result for display
+  const [walletChainId, setWalletChainId] = useState<string | null>(null)
+  const [result, setResult] = useState<string | boolean>("")
 
   async function handleConnect(options?: ConnectOptions) {
     const selectedWalletSWO = await connect(options)
 
     if (selectedWalletSWO) {
       const myFrontendProviderUrl =
-        "https://free-rpc.nethermind.io/sepolia-juno/v0_7"
+        "https://free-rpc.nethermind.io/mainnet-juno/v0_7"
       const myWalletAccount = new WalletAccount(
         { nodeUrl: myFrontendProviderUrl },
         selectedWalletSWO,
       )
       setWalletAccount(myWalletAccount)
       setWallet(selectedWalletSWO)
+      setWalletChainId(
+        await selectedWalletSWO.request({
+          type: "wallet_requestChainId",
+        }),
+      )
+      setWalletAddress(myWalletAccount.address)
+      setWalletName(selectedWalletSWO?.name || "")
+      // Set the wallet globally if needed
+      window.wallet = myWalletAccount
+      window.swo = selectedWalletSWO
+      // myWalletAccount.walletProvider.on("networkChanged", (res,acc) => {
+      //   console.log(res,acc)
+      // })
     }
-
-    setWalletName(selectedWalletSWO?.name || "")
   }
 
   async function handleDisconnect(options?: DisconnectOptions) {
@@ -41,7 +60,9 @@ function App() {
     setWalletName("")
     setWallet(null)
     setWalletAddress(null)
-    setResult("") // Clear result on disconnect
+    setWalletAccount(null)
+    setWalletChainId(null)
+    setResult("")
   }
 
   const tokenToWatch = {
@@ -54,6 +75,28 @@ function App() {
       decimals: 18,
     },
   }
+
+  useEffect(() => {
+    if (!wallet) return
+
+    const handleNetworkChange = (chainId: any, accounts: any) => {
+      setWalletAddress(accounts[0])
+      setWalletChainId(chainId)
+    }
+
+    const handleAccountChange = (accounts: any) => {
+      setWalletAddress(accounts[0])
+    }
+
+    wallet.on("networkChanged", handleNetworkChange)
+    wallet.on("accountsChanged", handleAccountChange)
+
+    // Manual cleanup strategy: reset listeners on new `walletAccount`
+    // return () => {
+    //   walletAccount.onNetworkChanged(() => {}) // Replaces the listener with a no-op
+    //   walletAccount.onAccountChange(() => {}) // Replaces the listener with a no-op
+    // }
+  }, [wallet])
 
   const methods = [
     {
@@ -91,10 +134,20 @@ function App() {
       accountWallet: async () => {
         if (walletAccount) {
           try {
+            const targetChainId =
+              walletChainId === constants.StarknetChainId.SN_SEPOLIA
+                ? constants.StarknetChainId.SN_MAIN
+                : constants.StarknetChainId.SN_SEPOLIA
+
             const response = await walletAccount.switchStarknetChain(
-              constants.StarknetChainId.SN_SEPOLIA,
+              targetChainId,
             )
             setResult(response) // Display plain text
+            setWalletChainId(targetChainId) // Update the local state
+            const accounts = await walletAccount?.requestAccounts()
+            if (accounts) {
+              setWalletAddress(accounts[0])
+            }
           } catch (error: any) {
             console.log(error)
             setResult(`Error: ${error.message}`)
@@ -104,11 +157,21 @@ function App() {
       rpc: async () => {
         if (wallet) {
           try {
+            const targetChainId =
+              walletChainId === constants.StarknetChainId.SN_SEPOLIA
+                ? constants.StarknetChainId.SN_MAIN
+                : constants.StarknetChainId.SN_SEPOLIA
+
             const response = await wallet.request({
               type: "wallet_switchStarknetChain",
-              params: { chainId: constants.StarknetChainId.SN_SEPOLIA },
+              params: { chainId: targetChainId },
             })
             setResult(response) // Display plain text
+            setWalletChainId(targetChainId) // Update the local state
+            const accounts = await walletAccount?.requestAccounts()
+            if (accounts) {
+              setWalletAddress(accounts[0])
+            }
           } catch (error: any) {
             console.log(error)
             setResult(`Error: ${error.message}`)
@@ -119,17 +182,18 @@ function App() {
     {
       name: "wallet_requestChainId",
       label: "Request Chain ID",
-      accountWallet: async () => {
-        if (walletAccount) {
-          try {
-            const response = await walletAccount.getChainId()
-            setResult(response) // Display plain text
-          } catch (error: any) {
-            console.log(error)
-            setResult(`Error: ${error.message}`)
-          }
-        }
-      },
+      accountWallet: null,
+      // accountWallet: async () => {
+      //   if (walletAccount) {
+      //     try {
+      //       const response = await walletAccount.getChainId()
+      //       setResult(response) // Display plain text
+      //     } catch (error: any) {
+      //       console.log(error)
+      //       setResult(`Error: ${error.message}`)
+      //     }
+      //   }
+      // },
       rpc: async () => {
         if (wallet) {
           try {
@@ -192,7 +256,6 @@ function App() {
       label: "Add Invoke Transaction",
       accountWallet: null, // Not implemented
       rpc: async () => {
-        console.log(walletAddress)
         if (wallet && walletAddress) {
           try {
             const response = await wallet.request({
@@ -374,11 +437,13 @@ function App() {
         </div>
       </div>
 
-      {walletName && (
+      {walletName && walletChainId && (
         <div>
-          <h2>
-            Selected Wallet: <pre>{walletName}</pre>
-          </h2>
+          <h4>
+            <pre>Wallet: {walletName}</pre>
+            <pre>Chain: {chains[walletChainId]}</pre>
+            <pre>Address: {walletAddress}</pre>
+          </h4>
           <div className="method-table">
             <div className="table-header">
               <span>Method Name</span>
