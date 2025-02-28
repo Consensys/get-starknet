@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages with Specific Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy from"
+        required: true
+        default: "main"
+      version:
+        description: "Version of the package to deploy"
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+  pages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }} # Use the selected branch
+
+      - name: Set up Node.js (required if you're using a static site generator)
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
+
+      - name: Perform Code Update
+        run: |
+          # Update the URL in the file (ensure we use -i for in-place replacement)
+          sed -i 's|https://snaps.consensys.io/starknet/get-starknet/v1/remoteEntry.js|https://dev.snaps.consensys.io/starknet/get-starknet/v1/remoteEntry.js|g' ./packages/core/src/wallet/virtualWallets/metaMaskVirtualWallet.ts
+
+          # Update the MetaMaskSnapWallet line with the specified version
+          sed -i "s|const wallet = new MetaMaskSnapWallet(metaMaskVirtualWallet.provider, \"\*\")|const wallet = new MetaMaskSnapWallet(metaMaskVirtualWallet.provider, \"${{ github.event.inputs.version }}\")|g" ./packages/core/src/wallet/virtualWallets/metaMaskVirtualWallet.ts
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies with pnpm
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: "./e2e/dist"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
