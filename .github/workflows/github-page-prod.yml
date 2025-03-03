@@ -37,7 +37,7 @@ jobs:
         uses: actions/configure-pages@v3
 
       - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           # upload entire directory
           path: "./e2e/dist"
